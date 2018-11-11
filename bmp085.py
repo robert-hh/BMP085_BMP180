@@ -63,7 +63,7 @@ class BMP085():
 
         # settings to be adjusted by user
         self._oversample = 3
-        self._baseline = 1026.50
+        self._baseline = 1013.25
 
         # output preset
         self._UT_raw = bytearray(2)
