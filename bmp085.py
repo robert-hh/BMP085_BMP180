@@ -145,7 +145,7 @@ class BMP085():
         Temperature in degree C.
         '''
         next(self.gauge)
-        X1 = ((unp(">h", self._UT_raw)[0] - self._AC6) * self._AC5) >> 15
+        X1 = ((unp(">H", self._UT_raw)[0] - self._AC6) * self._AC5) >> 15
         X2 = (self._MC << 11) // (X1 + self._MD)
         self._B5 = X1 + X2
         return ((self._B5 + 8) >> 4) / 10.0
@@ -178,7 +178,7 @@ class BMP085():
         Altitude in m.
         '''
         try:
-            p = -7990.0 * math.log(self.pressure / self._baseline)
+            p = 44330 * (1.0 - math.pow(self.pressure / self._baseline, 0.1903))
         except:
             p = 0.0
         return p
