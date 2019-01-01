@@ -12,9 +12,9 @@ Update 2018:
 - added a setter/getter for the sealevel pressure
 - return hPa for pressure.
 - remove all memory allocations from nextgauge()
-- simplified the calculation, using integer arithmetic and shifts where possible,
-  making use if the unlimited integer size in Python. Since these number can get
-  very large, heap memory may get allocted
+- simplified the calculation, using integer arithmetic and shifts where
+  possible, making use if the unlimited integer size in Python. Since
+  these number can get very large, heap memory may get allocted
 - remove try/except at places where it cannot fail
 - use ticks_diff() instead of arithmetic difference
 
@@ -39,6 +39,7 @@ from ustruct import unpack as unp
 import math
 import time
 
+
 # BMP085 class
 class BMP085():
     '''
@@ -51,7 +52,7 @@ class BMP085():
             raise ValueError("The I2C bus must be specified")
         else:
             self._bmp_i2c = i2c
-        self._bmp_addr = 119 # fix
+        self._bmp_addr = 119  # fix
         self.chip_id = self._bmp_i2c.readfrom_mem(self._bmp_addr, 0xD0, 2)
         self._delays = (7, 8, 14, 28)
         self._diff_sign = time.ticks_diff(1, 0)
@@ -59,7 +60,8 @@ class BMP085():
         # read calibration data from EEPROM
         (self._AC1, self._AC2, self._AC3, self._AC4, self._AC5, self._AC6,
          self._B1, self._B2, self._MB, self._MC, self._MD) = \
-         unp('>hhhHHHhhhhh', self._bmp_i2c.readfrom_mem(self._bmp_addr, 0xAA, 22))
+            unp('>hhhHHHhhhhh',
+                self._bmp_i2c.readfrom_mem(self._bmp_addr, 0xAA, 22))
 
         # settings to be adjusted by user
         self._oversample = 3
@@ -70,7 +72,7 @@ class BMP085():
         self._B5 = 0
         self._MLX = bytearray(3)
         self._COMMAND = bytearray(1)
-        self.gauge = self.makegauge() # Generator instance
+        self.gauge = self.makegauge()  # Generator instance
         for _ in range(128):
             next(self.gauge)
             time.sleep_ms(1)
@@ -92,10 +94,12 @@ class BMP085():
             self._COMMAND[0] = 0x2e
             self._bmp_i2c.writeto_mem(self._bmp_addr, 0xF4, self._COMMAND)
             t_start = time.ticks_ms()
-            while (time.ticks_diff(time.ticks_ms(), t_start) * self._diff_sign) <= 5: # 5mS delay
+            while (time.ticks_diff(time.ticks_ms(), t_start) *
+                   self._diff_sign) <= 5:  # 5mS delay
                 yield None
             try:
-                self._bmp_i2c.readfrom_mem_into(self._bmp_addr, 0xf6, self._UT_raw)
+                self._bmp_i2c.readfrom_mem_into(self._bmp_addr, 0xf6,
+                                                self._UT_raw)
             except:
                 yield None
 
@@ -103,17 +107,18 @@ class BMP085():
             self._bmp_i2c.writeto_mem(self._bmp_addr, 0xF4, self._COMMAND)
             t_pressure_ready = self._delays[self._oversample]
             t_start = time.ticks_ms()
-            while (time.ticks_diff(time.ticks_ms(), t_start) * self._diff_sign) \
-                    <= t_pressure_ready:
+            while (time.ticks_diff(time.ticks_ms(), t_start) *
+                   self._diff_sign) <= t_pressure_ready:
                 yield None
             try:
-                self._bmp_i2c.readfrom_mem_into(self._bmp_addr, 0xf6, self._MLX)
+                self._bmp_i2c.readfrom_mem_into(self._bmp_addr, 0xf6,
+                                                self._MLX)
             except:
                 yield None
             yield True
 
     def blocking_read(self):
-        if next(self.gauge) is not None: # Discard old data
+        if next(self.gauge) is not None:  # Discard old data
             pass
         while next(self.gauge) is None:
             pass
@@ -124,7 +129,7 @@ class BMP085():
 
     @sealevel.setter
     def sealevel(self, value):
-        if 300 < value < 1200: # just ensure some reasonable value
+        if 300 < value < 1200:  # just ensure some reasonable value
             self._baseline = value
 
     @property
@@ -156,8 +161,8 @@ class BMP085():
         Pressure in hPa.
         '''
         self.temperature  # Get values for temperature AND pressure
-        UP = ((self._MLX[0] << 16) + (self._MLX[1] << 8) + self._MLX[2]) >> \
-                (8 - self._oversample)
+        UP = (((self._MLX[0] << 16) + (self._MLX[1] << 8) + self._MLX[2]) >>
+              (8 - self._oversample))
         B6 = self._B5 - 4000
         X1 = (self._B2 * ((B6 * B6) >> 12)) >> 11
         X2 = (self._AC2 * B6) >> 11
@@ -178,12 +183,13 @@ class BMP085():
         Altitude in m.
         '''
         try:
-            p = 44330 * (1.0 - math.pow(self.pressure / self._baseline, 0.1903))
+            p = 44330 * (1.0 - math.pow(self.pressure /
+                                        self._baseline, 0.1903))
         except:
             p = 0.0
         return p
 
+
 class BMP180(BMP085):
     def __init__(self, i2c=None):
         super().__init__(i2c)
-
