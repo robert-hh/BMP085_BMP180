@@ -1,0 +1,7 @@
+{
+  "urls": [
+    ["bmp085.py", "github:robert-hh/BMP085_BMP180/bmp085.py"]
+  ],
+  "version": "1.0.0",
+  "deps": []
+}
